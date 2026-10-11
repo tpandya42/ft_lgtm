@@ -2,7 +2,36 @@
 
 This guide explains how to install **Ubuntu 24.04 LTS Desktop** in Oracle VirtualBox, install the VirtualBox Guest Additions, and configure shared folders to access files from your host computer.
 
-No Linux experience is required. Just follow the steps in order.
+The main goal is not just to create a virtual machine. This guide exists because the VM itself is straightforward, but getting the VirtualBox shared folder working on the school computers took much longer to figure out than expected. The important part is making that shared folder reliable, so Ubuntu can access and edit the project files from the host system.
+
+```text
+Host project folder, for example ft_lgtm
+        |
+        | 1. Create an Ubuntu VM
+        |    Why: gives you the Linux environment for the project
+        v
+Ubuntu 24.04 running in VirtualBox
+        |
+        | 2. Install required packages
+        |    Why: lets Guest Additions build correctly
+        v
+VirtualBox Guest Additions
+        |
+        | 3. Add your user to the vboxsf group and reboot
+        |    Why: gives Ubuntu permission to open shared folders
+        v
+Shared-folder permissions are active
+        |
+        | 4. Configure the shared folder in VirtualBox
+        |    Why: connects the host project folder to Ubuntu
+        v
+/media/ft_lgtm
+        |
+        | 5. Verify that files can be opened, edited, and created
+        |    Why: confirms the shared folder actually works
+        v
+Working project folder inside Ubuntu
+```
 
 ## 1. Install Ubuntu 24.04 Desktop
 
