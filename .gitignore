@@ -1,0 +1,19 @@
+# Local VM state
+.vagrant/
+
+# Local tool / workspace state
+.agents/
+.codex/
+.aws/
+
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor / operating-system files
+.DS_Store
+*.swp
+*~
