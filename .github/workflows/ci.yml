@@ -25,7 +25,7 @@ jobs:
       - name: Check module files
         run: |
           go mod tidy
-          git diff --exit-code --go.mod go.sum
+          git diff --exit-code -- go.mod go.sum
 
       - name: Verify downloaded modules
         run: go mod verify
