@@ -11,11 +11,11 @@ import (
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
-	"go.uber.org/zap"
 	"github.com/tpandya42/ft_lgtm/internal/config"
+	"go.uber.org/zap"
 )
 
-func main(){
+func main() {
 	// Loading Config
 	cfg, err := config.Load()
 	if err != nil {
@@ -49,7 +49,6 @@ func main(){
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-
 	// Graceful Shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -75,4 +74,3 @@ func main(){
 		logger.Fatal("shutdown failed", zap.Error(err))
 	}
 }
-
