@@ -23,17 +23,17 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port	int 	`mapstructure:"port"`
-	ReadTimeout		time.Duration	`mapstructure:"read_timeout"`
-	WriteTimeout	time.Duration	`mapstructure:"write_timeout"`
-	IdleTimeout		time.Duration	`mapstructure:"idle_timeout"`
+	Port         int           `mapstructure:"port"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
 }
 
 type WasmConfig struct {
-	MemoryLimitMB 	int		`mapstructure:"memory_limit_mb"`
-	FuelLimit		uint64  `mapstructure:"fuel_limit"`
-	Timeout			time.Duration	`mapstructure:"timeout"`
-	OutputLimitKB	int				`mapstructure:"output_limit_kb"`
+	MemoryLimitMB int           `mapstructure:"memory_limit_mb"`
+	FuelLimit     uint64        `mapstructure:"fuel_limit"`
+	Timeout       time.Duration `mapstructure:"timeout"`
+	OutputLimitKB int           `mapstructure:"output_limit_kb"`
 }
 
 type IPFSConfig struct {
