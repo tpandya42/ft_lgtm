@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: ${{ github.workflows }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   deps:
