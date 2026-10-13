@@ -7,3 +7,7 @@
 Before working on the project, set up the Ubuntu VirtualBox VM and shared folder:
 
 [VM Setup Guide](docs/vm-setup.md)
+
+## Documentation
+
+[Current Architecture](docs/architecture.md)
