@@ -11,3 +11,5 @@ Before working on the project, set up the Ubuntu VirtualBox VM and shared folder
 ## Documentation
 
 [Current Architecture](docs/architecture.md)
+
+[Frontend State Flow](docs/frontend-state-flow.md)
