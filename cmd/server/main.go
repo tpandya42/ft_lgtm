@@ -11,12 +11,14 @@ import (
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	"github.com/tpandya42/ft_lgtm/internal/api"
 	"github.com/tpandya42/ft_lgtm/internal/config"
 	"go.uber.org/zap"
 )
 
 func main() {
 	// Loading Config
+	// step 1: start the server on specific port (e.g. 1222)
 	cfg, err := config.Load()
 	if err != nil {
 		// Fallback to basic logger for startup errors
@@ -44,10 +46,37 @@ func main() {
 		},
 	}))
 
-	// Routes
+	// step 2: Define Routes on which user uploads source code
 	e.GET("/health", func(c *echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
+
+	e.POST("/api", func(c *echo.Context) error {
+		code := c.FormValue("code")
+		lang := c.FormValue("lang")
+
+		// step 3: Try to compile the source code into wasm.
+		wasmBinary, err := api.CompileToWasm(c.Request().Context(), lang, code)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"error": err.Error(),
+				"stage": "compilation",
+			})
+		}
+
+		// step 4: try to run wasm binary in wasm runtime (monitor how much memory it takes)
+		result, err := api.RunWasm(wasmBinary)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"error": err.Error(),
+				"stage": "execution",
+			})
+		}
+
+		return c.String(http.StatusOK, result)
+	})
+
+	// step 5: return output of binary on success else code specific error message
 
 	// Graceful Shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

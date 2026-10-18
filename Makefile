@@ -12,6 +12,9 @@ build:
 run:
 	go run $(CMD_DIR)/main.go
 
+format:
+	gofmt -w .
+
 lint:
 	$(GOLANGCI_LINT) run ./...
 
