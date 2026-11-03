@@ -9,6 +9,7 @@ wasm:
   fuel_limit: 5000000
   timeout: "5s"
   output_limit_kb: 10
+  compile_timeout: "15s"
 
 ipfs:
   api_address: "/ip4/127.0.0.1/tcp/5001"

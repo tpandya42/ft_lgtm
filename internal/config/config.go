@@ -30,10 +30,11 @@ type ServerConfig struct {
 }
 
 type WasmConfig struct {
-	MemoryLimitMB int           `mapstructure:"memory_limit_mb"`
-	FuelLimit     uint64        `mapstructure:"fuel_limit"`
-	Timeout       time.Duration `mapstructure:"timeout"`
-	OutputLimitKB int           `mapstructure:"output_limit_kb"`
+	MemoryLimitMB  int           `mapstructure:"memory_limit_mb"`
+	FuelLimit      uint64        `mapstructure:"fuel_limit"`
+	Timeout        time.Duration `mapstructure:"timeout"`
+	OutputLimitKB  int           `mapstructure:"output_limit_kb"`
+	CompileTimeout time.Duration `mapstructure:"compile_timeout"`
 }
 
 type IPFSConfig struct {
@@ -70,6 +71,7 @@ func Load() (*Config, error) {
 	v.SetDefault("wasm.fuel_limit", 5000000)
 	v.SetDefault("wasm.timeout", "5s")
 	v.SetDefault("wasm.output_limit_kb", 10)
+	v.SetDefault("wasm.compile_timeout", "15s")
 	v.SetDefault("ipfs.api_address", "/ip4/127.0.0.1/tcp/5001")
 	v.SetDefault("ipfs.gateway_url", "http://ipfs.lgtm.local")
 	v.SetDefault("otel.service_name", "lgtm-backend")

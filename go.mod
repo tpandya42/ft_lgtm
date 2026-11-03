@@ -3,6 +3,7 @@ module github.com/tpandya42/ft_lgtm
 go 1.27.2
 
 require (
+	github.com/bytecodealliance/wasmtime-go/v49 v49.0.0
 	github.com/labstack/echo/v5 v5.4.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.28.0
