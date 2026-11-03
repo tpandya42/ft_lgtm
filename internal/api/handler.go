@@ -5,26 +5,82 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
 
 	wasmtime "github.com/bytecodealliance/wasmtime-go/v49"
+	"github.com/labstack/echo/v5"
+	"github.com/tpandya42/ft_lgtm/internal/config"
 )
 
 var (
-	ErrCompilationTimeout = errors.New("compilation timeout")
-	ErrCompilationFailed  = errors.New("compilation failed")
-	ErrExecutionFailed    = errors.New("execution failed")
+	ErrCompilationTimeout  = errors.New("compilation timeout")
+	ErrCompilationFailed   = errors.New("compilation failed")
+	ErrExecutionFailed     = errors.New("execution failed")
+	ErrUnsupportedLanguage = errors.New("unsupported language")
 )
 
-const (
-	compileTimeout   = 30 * time.Second
-	memoryLimitBytes = 10 * 1024 * 1024
-	fuelLimit        = 5_000_000
-	outputLimitBytes = 10 * 1024
-)
+type Handler struct {
+	Wasm config.WasmConfig
+}
+
+func NewHandler(wasm config.WasmConfig) *Handler {
+	return &Handler{Wasm: wasm}
+}
+
+func (h *Handler) Execute(c *echo.Context) error {
+	var req ExecuteRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, ExecuteResponse{
+			Error: "invalid request body: " + err.Error(),
+		})
+	}
+
+	if req.Code == "" {
+		return c.JSON(http.StatusBadRequest, ExecuteResponse{
+			Error: `field "code" must not be empty`,
+		})
+	}
+
+	wasmBinary, err := CompileToWasm(c.Request().Context(), req.Language, req.Code, h.Wasm.CompileTimeout)
+	if err != nil {
+		return writePipelineError(c, err, "compilation")
+	}
+
+	result, err := RunWasm(wasmBinary, h.Wasm)
+	if err != nil {
+		return writePipelineError(c, err, "execution")
+	}
+	return c.JSON(http.StatusOK, ExecuteResponse{
+		Success: true,
+		Output:  result,
+	})
+}
+
+func writePipelineError(c *echo.Context, err error, stage string) error {
+	status := errorStatus(err)
+	res := ExecuteResponse{Error: err.Error()}
+	if status != http.StatusBadRequest {
+		res.Stage = stage
+	}
+	return c.JSON(status, res)
+}
+
+func errorStatus(err error) int {
+	switch {
+	case errors.Is(err, ErrUnsupportedLanguage):
+		return http.StatusBadRequest
+	case errors.Is(err, ErrCompilationFailed),
+		errors.Is(err, ErrCompilationTimeout),
+		errors.Is(err, ErrExecutionFailed):
+		return http.StatusUnprocessableEntity
+	default:
+		return http.StatusInternalServerError
+	}
+}
 
 func compilerFor(lang string) (string, string, error) {
 	switch lang {
@@ -33,7 +89,7 @@ func compilerFor(lang string) (string, string, error) {
 	case "cpp":
 		return "clang++", ".cpp", nil
 	default:
-		return "", "", fmt.Errorf("unsupported language: %q", lang)
+		return "", "", fmt.Errorf("%w: %q (use \"c\" or \"cpp\")", ErrUnsupportedLanguage, lang)
 	}
 }
 
@@ -50,7 +106,7 @@ func compilerPath(name string) string {
 	return name
 }
 
-func CompileToWasm(ctx context.Context, lang string, code string) ([]byte, error) {
+func CompileToWasm(ctx context.Context, lang string, code string, timeout time.Duration) ([]byte, error) {
 	compiler, ext, err := compilerFor(lang)
 	if err != nil {
 		return nil, err
@@ -69,7 +125,7 @@ func CompileToWasm(ctx context.Context, lang string, code string) ([]byte, error
 		return nil, err
 	}
 
-	compileCtx, cancel := context.WithTimeout(ctx, compileTimeout)
+	compileCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	args := []string{"-O2", "-o", outputPath, sourcePath}
@@ -102,7 +158,7 @@ func CompileToWasm(ctx context.Context, lang string, code string) ([]byte, error
 	return wasm, nil
 }
 
-func RunWasm(wasmByte []byte) (string, error) {
+func RunWasm(wasmByte []byte, wasmCfg config.WasmConfig) (string, error) {
 	dir, err := os.MkdirTemp("", "lgtm-run-*")
 	if err != nil {
 		return "", err
@@ -117,8 +173,9 @@ func RunWasm(wasmByte []byte) (string, error) {
 	engine := wasmtime.NewEngineWithConfig(engineConfig)
 
 	store := wasmtime.NewStore(engine)
-	store.Limiter(memoryLimitBytes, -1, -1, -1, -1)
-	if err := store.SetFuel(fuelLimit); err != nil {
+	memoryBytes := int64(wasmCfg.MemoryLimitMB) * 1024 * 1024
+	store.Limiter(memoryBytes, -1, -1, -1, -1)
+	if err := store.SetFuel(wasmCfg.FuelLimit); err != nil {
 		return "", err
 	}
 
@@ -161,6 +218,7 @@ func RunWasm(wasmByte []byte) (string, error) {
 		return "", err
 	}
 
+	outputLimitBytes := wasmCfg.OutputLimitKB * 1024
 	if len(stdout) > outputLimitBytes {
 		stdout = stdout[:outputLimitBytes]
 	}

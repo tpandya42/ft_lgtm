@@ -51,30 +51,8 @@ func main() {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	e.POST("/api", func(c *echo.Context) error {
-		code := c.FormValue("code")
-		lang := c.FormValue("lang")
-
-		// step 3: Try to compile the source code into wasm.
-		wasmBinary, err := api.CompileToWasm(c.Request().Context(), lang, code)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": err.Error(),
-				"stage": "compilation",
-			})
-		}
-
-		// step 4: try to run wasm binary in wasm runtime (monitor how much memory it takes)
-		result, err := api.RunWasm(wasmBinary)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": err.Error(),
-				"stage": "execution",
-			})
-		}
-
-		return c.String(http.StatusOK, result)
-	})
+	h := api.NewHandler(cfg.Wasm)
+	e.POST("/api", h.Execute)
 
 	// step 5: return output of binary on success else code specific error message
 
